@@ -1,52 +1,132 @@
+#from Tkinter import *
 from tkinter import *
-import socket
-import threading
-from getpass import getpass
+import datetime
 import time
+import threading
+import socket
 import string
 
-MAX_BYTES = 65535
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(('127.0.0.1',1061))
+sock.connect(('localhost', 9521))
+#sock.send(b'1')
+nickName = input('input your nickname: ')
+sock.send(nickName.encode())
 
-def sendpaper():
-    content = 'xxxpaperxxx'
-    game_output.insert(END,content)
+#temp = 0
+#first = 0
 
-def sendscissors():
-    content = 'xxxscissorsxxx'
-    game_output.insert(END,content)
+def btnDisable():
+    game_paper['state'] = 'disable'
+    game_scissors['state'] = 'disable'
+    game_stone['state'] = 'disable'
 
-def sendstone():
-    content = 'xxxstonexxx'
-    game_output.insert(END,content)
+def btnEnable():
+    game_paper['state'] = 'normal'
+    game_scissors['state'] = 'normal'
+    game_stone['state'] = 'normal'
 
-def sendmsg():
-    msgcontent = 'I say: '
-    talk_output.insert(END, msgcontent)
-    talk_output.insert(END, talk_input.get('0.0', END))
-    sock.send(talk_input.get('0.0', END).encode())
-    talk_input.delete('0.0', END)
+
+
 
 def client():
     th2 = threading.Thread(target=recvThreadFunc)
     th2.setDaemon(True)
     th2.start()
 
+
 def recvThreadFunc():
     while True:
+       # global temp
         try:
-            otherword = sock.recv(MAX_BYTES)
+            otherword = sock.recv(1024)
             if otherword:
-                print(otherword.decode())
-                msg = 'Others say: '+ otherword.decode()
-                talk_output.insert(END,msg)
-            else :
-                pass
-        except ConnectionResetError:
-            print('Server is closed!')
+                word = otherword.decode()
+                if word[0] == '@':  #  receive  game msg
+                    print(word)
+                    game_output.delete('0.0', END)
+                    if word != '@same':
+                        game_output.insert(END,word[1:] + " Win\n") 
+                    else:
+                        game_output.insert(END,"Same power\n")
+                elif word[0] == '#':
+                    game_output.insert(END, "\n\n\n\n\n")
+                    
+                    
+                    for i in range(1,66,+17):                             
+                        game_output.insert(END, "                           "+word[i:i+17]+"\n" )
 
-client()
+                    time.sleep(2.5)
+                    btnEnable()  # open button
+
+                    print('==============')         
+
+                else:  # receive talk msg
+                    talk_output.insert(END,word)
+
+            else:
+                pass
+            
+        except ConnectionResetError:
+            print('Server is closed!')        
+
+#def sendgame():
+   # if first == 1:
+#    global temp
+#    print(temp)
+#    sock.send(temp.encode())
+  
+
+
+
+#for t in threads :
+#    t.setDaemon(True)
+#    t.start()
+#t.join()
+
+
+def sendpaper():
+    btnDisable()
+    content = '@Par'
+    Pcontent = "You use Par: "
+    game_output.insert(END,Pcontent)
+   # global temp
+   # temp = content
+    sock.send(content.encode())
+   # sendgame()
+
+
+def sendscissors():
+    btnDisable()
+    content = '@Cut'
+    Pcontent = "You use Cut: "
+    game_output.insert(END,Pcontent)
+   # global temp
+   # temp  = content
+    sock.send(content.encode())
+   # sendgame()
+
+def sendstone():
+    btnDisable()
+    content = '@Sto'
+    Pcontent = "You use Sto: "
+    game_output.insert(END,Pcontent)
+   # global temp
+   # temp = content
+    sock.send(content.encode())
+   # sendgame()
+
+
+def sendmsg():
+    msgcontent = 'I say: '
+    talk_output.insert(END, msgcontent)
+    talk_output.insert(END, talk_input.get('0.0', END))
+
+    sock.send(talk_input.get('0.0', END).encode()) # send talk msg
+
+    talk_input.delete('0.0', END)
+
+
+client() # client
 
 #GUI
 root = Tk()
@@ -56,7 +136,7 @@ frame_left_top   = Frame(width=500, height=400)
 frame_left_paper = Frame(width=166, height=30)
 frame_left_scissors = Frame(width=166, height=30)
 frame_left_stone = Frame(width=168, height=30)
-frame_right_top   = Frame(width=300, height=360, bg='white')
+frame_right_top   = Frame(width=300, height=360, bg='brown')
 frame_right_center  = Frame(width=300, height=40, bg='white')
 frame_right_btn  = Frame(width=300, height=30)
 #use grid to set frame 
@@ -92,4 +172,16 @@ talk_output.grid()
 talk_input.grid()
 talk_send.grid()
 
+
+#th1 = threading.Thread(target=sendThreadFunc)
+#th2 = threading.Thread(target=recvThreadFunc)
+#threads = [th2]
+#threads = [th1, th2]
+
+#th1.start()
+#th2.start()
+#first = 1
+
 root.mainloop()
+
+
